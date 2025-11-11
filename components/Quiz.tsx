@@ -1,0 +1,203 @@
+import React, { useState, useEffect, MouseEvent } from 'react';
+import { Chapter, Term } from '../types';
+import { useApp } from '../App';
+import { getQuizExplanationStream } from '../services/geminiService';
+import Confetti from './Confetti';
+
+interface QuizProps {
+  chapter: Chapter;
+}
+
+const renderMarkdown = (text: string) => {
+    if (!text) return null;
+    return text.split('**').map((part, i) =>
+        i % 2 === 1 ? <strong key={i} className="font-bold">{part}</strong> : part
+    );
+};
+
+const Quiz: React.FC<QuizProps> = ({ chapter }) => {
+  const { userName, chapters, updateChapterScore, goToHome, goToChapter } = useApp();
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [explanation, setExplanation] = useState('');
+  const [score, setScore] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
+  const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+  const [shuffledTerms, setShuffledTerms] = useState<Term[]>([]);
+  const [confettiPosition, setConfettiPosition] = useState<{ x: number; y: number } | null>(null);
+
+
+  useEffect(() => {
+    const array = [...chapter.terms];
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    setShuffledTerms(array);
+  }, [chapter]);
+
+  useEffect(() => {
+    if (isFinished) {
+      updateChapterScore(chapter.id, score, shuffledTerms.length);
+    }
+  }, [isFinished, score, chapter.id, shuffledTerms.length, updateChapterScore]);
+
+  const handleAnswer = async (answer: string, event: MouseEvent<HTMLButtonElement>) => {
+    if (selectedAnswer) return;
+
+    setSelectedAnswer(answer);
+    const correct = answer === currentTerm.quiz_answer;
+    setIsCorrect(correct);
+
+    if (correct) {
+      setScore(s => s + 1);
+      setConfettiPosition({ x: event.clientX, y: event.clientY });
+      setTimeout(() => {
+        nextQuestion();
+      }, 2000);
+    } else {
+      setShowExplanation(true);
+      setIsLoadingExplanation(true);
+      setExplanation(''); // Reset for streaming
+      try {
+        const stream = await getQuizExplanationStream(currentTerm, chapter, userName);
+        setIsLoadingExplanation(false);
+        for await (const chunk of stream) {
+          setExplanation(prev => prev + chunk.text);
+        }
+      } catch (error) {
+        console.error("Error streaming explanation:", error);
+        setExplanation("이런! AI 선생님이 지금 조금 아픈가 봐요. 다시 시도해 주세요!");
+        setIsLoadingExplanation(false);
+      }
+    }
+  };
+
+  const nextQuestion = () => {
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setShowExplanation(false);
+    setExplanation('');
+    setConfettiPosition(null);
+    if (currentQuestionIndex < shuffledTerms.length - 1) {
+      setCurrentQuestionIndex(i => i + 1);
+    } else {
+      setIsFinished(true);
+    }
+  };
+
+  if (shuffledTerms.length === 0) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+             <div className="flex items-center text-purple-700">
+                <svg className="animate-spin h-8 w-8 mr-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>퀴즈를 준비하고 있어...</span>
+            </div>
+        </div>
+    );
+  }
+
+  const currentTerm = shuffledTerms[currentQuestionIndex];
+
+  if (isFinished) {
+    const mastery = score / shuffledTerms.length;
+    const isLastChapter = chapter.id === chapters.length;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-4 animate-fade-in relative">
+        {mastery >= 0.7 && <Confetti />}
+        <h2 className="text-3xl font-gamja text-purple-700 mb-4 animate-bounce">참 잘했어, {userName}!</h2>
+        <p className="text-2xl font-bold text-gray-800">
+          {chapter.title} 퀴즈 완료!
+        </p>
+        <p className="text-4xl my-6 font-bold">
+          {score} / {shuffledTerms.length}
+        </p>
+        {mastery >= 0.7 ? (
+          <p className="text-lg text-green-600 mb-8">🎉 다음 챕터가 열렸어! 🎉</p>
+        ) : (
+          <p className="text-lg text-orange-600 mb-8">아쉽다! 70% 이상 맞혀야 통과야. 다시 도전해볼까?</p>
+        )}
+        <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-sm">
+            <button
+                onClick={goToHome}
+                className="w-full bg-purple-500 text-white font-bold py-3 px-6 rounded-xl text-lg hover:bg-purple-600 transition-transform transform hover:scale-105"
+                >
+                챕터 선택으로
+            </button>
+            {mastery >= 0.7 && !isLastChapter && (
+                <button
+                onClick={() => goToChapter(chapter.id + 1)}
+                className="w-full bg-pink-500 text-white font-bold py-3 px-6 rounded-xl text-lg hover:bg-pink-600 transition-transform transform hover:scale-105"
+                >
+                다음 챕터로! &rarr;
+                </button>
+            )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 animate-fade-in-up relative">
+      {confettiPosition && <Confetti clickPosition={confettiPosition} />}
+      <header className="text-center mb-8">
+        <h1 className="text-3xl font-gamja text-purple-700">{chapter.title}: 퀴즈</h1>
+        <p className="text-gray-600 mt-2">
+          문제 {currentQuestionIndex + 1} / {shuffledTerms.length}
+        </p>
+      </header>
+
+      <div className="bg-white/70 p-6 rounded-2xl shadow-md">
+        <p className="text-xl text-gray-800 font-semibold mb-6 text-center">{currentTerm.quiz_question}</p>
+        <div className="grid grid-cols-1 gap-4">
+          {currentTerm.quiz_options.map((option, index) => (
+            <button
+              key={index}
+              onClick={(e) => handleAnswer(option, e)}
+              disabled={!!selectedAnswer}
+              className={`
+                w-full p-4 rounded-lg text-left transition-all text-lg
+                ${!selectedAnswer ? 'bg-white hover:bg-purple-100' : ''}
+                ${selectedAnswer && option === currentTerm.quiz_answer ? 'bg-green-200 text-green-800 ring-2 ring-green-500 transform scale-105' : ''}
+                ${selectedAnswer && option !== currentTerm.quiz_answer && option === selectedAnswer ? 'bg-red-200 text-red-800 ring-2 ring-red-500 animate-shake' : ''}
+                ${selectedAnswer && option !== currentTerm.quiz_answer && option !== selectedAnswer ? 'bg-gray-100 text-gray-400' : ''}
+              `}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {showExplanation && (
+        <div className="mt-6 bg-yellow-100 border-l-4 border-yellow-400 p-4 rounded-r-lg animate-fade-in">
+          <h3 className="font-bold text-yellow-800 font-gamja text-xl">리라의 힌트! ✨</h3>
+          {isLoadingExplanation ? (
+             <div className="flex items-center text-yellow-700 mt-2">
+                <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>리라가 열심히 생각하고 있어...</span>
+            </div>
+          ) : (
+            <p className="text-yellow-800 mt-2 leading-relaxed">{renderMarkdown(explanation)}</p>
+          )}
+           <button
+            onClick={nextQuestion}
+            className="mt-4 bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500 transition"
+          >
+            다음 문제로
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Quiz;
