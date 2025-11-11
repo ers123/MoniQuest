@@ -1,5 +1,4 @@
-# MoniQuest · EcoQuest
-
+# MoniQuest
 ## Overview · 개요
 **English**  
 MoniQuest is a Progressive Web App that turns economics vocabulary into an adventurous quiz for kids. Learners unlock chapters, receive randomized prompts, and get warm AI-powered explanations generated with Google's Gemini Flash model—even when they miss an answer. The app ships with installable PWA metadata, offline caching, and social preview assets so it feels native on desktop and mobile.
