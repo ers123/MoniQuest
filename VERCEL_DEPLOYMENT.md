@@ -8,7 +8,7 @@ MoniQuest is configured for secure deployment on Vercel with the following archi
 - **API Proxy**: `/api/generate` endpoint running on Vercel serverless functions
 - **API Key Security**: `GEMINI_API_KEY` stored only in Vercel environment variables (never in repository)
 - **PWA Support**: Service worker with cache versioning for offline functionality
-- **Base Path**: Maintains `/MoniQuest/` for GitHub Pages compatibility
+- **Base Path**: Auto-detects environment (`/` for Vercel, `/MoniQuest/` for GitHub Pages)
 
 ## Prerequisites
 
@@ -259,6 +259,18 @@ Monitor in real-time:
 - Check Vercel build logs
 - Verify `package.json` dependencies
 - Ensure Node.js version compatibility (20.x)
+
+### Blank page / Nothing shows up
+
+**Symptom**: Deployment succeeds but page is blank
+**Cause**: Base path mismatch - assets loading from wrong path
+
+**Solution**: The app now auto-detects Vercel environment. If you still see a blank page:
+
+1. Check browser console for 404 errors on assets
+2. Verify `vite.config.ts` has Vercel detection (lines 11-14)
+3. Optionally set `VITE_BASE_PATH=/` in Vercel environment variables
+4. Redeploy after any changes
 
 ## Continuous Deployment
 
