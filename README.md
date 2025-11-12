@@ -1,4 +1,4 @@
-# MoniQuest · EcoQuest
+# MoniQuest
 
 ## Overview · 개요
 **English**  
