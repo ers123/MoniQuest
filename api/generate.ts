@@ -75,6 +75,18 @@ const getAllowedOrigins = () => {
   return origins;
 };
 
+const isOriginAllowed = (origin: string | null): boolean => {
+  if (!origin) return true;
+
+  // Check exact matches
+  if (getAllowedOrigins().has(origin)) return true;
+
+  // Allow all *.vercel.app domains (for preview deployments)
+  if (origin.endsWith('.vercel.app')) return true;
+
+  return false;
+};
+
 const withCors = (res: VercelResponse, origin: string | null) => {
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
@@ -196,7 +208,7 @@ const generateContent = async (prompt: string) => {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const originHeader = req.headers.origin;
   const origin = typeof originHeader === 'string' ? originHeader : null;
-  const allowed = origin ? getAllowedOrigins().has(origin) : true;
+  const allowed = isOriginAllowed(origin);
 
   if (req.method === 'OPTIONS') {
     withCors(res, allowed ? origin : null);
