@@ -186,7 +186,7 @@ const generateContent = async (prompt: string) => {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: DEFAULT_GENERATION_CONFIG,
   });
-  const text = response.text();
+  const text = response.text;
   if (!text) {
     throw new Error('Gemini response did not include text.');
   }
