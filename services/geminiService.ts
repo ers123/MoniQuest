@@ -13,12 +13,33 @@ const DEFAULT_GENERATION_CONFIG = {
   topK: 40,
 };
 
-const generateStream = async (prompt: string) =>
-  ai.models.generateContentStream({
+const generateStream = async (prompt: string) => {
+  const response = await ai.models.generateContentStream({
     model: GEMINI_MODEL_NAME,
     contents: prompt,
     config: DEFAULT_GENERATION_CONFIG,
   });
+
+  return (async function* stream() {
+    for await (const chunk of response as AsyncGenerator<unknown>) {
+      let text = '';
+      if (typeof chunk === 'string') {
+        text = chunk;
+      } else if (chunk && typeof chunk === 'object') {
+        const maybeText = (chunk as { text?: unknown }).text;
+        if (typeof maybeText === 'function') {
+          text = maybeText.call(chunk) ?? '';
+        } else if (typeof maybeText === 'string') {
+          text = maybeText;
+        }
+      }
+
+      if (text) {
+        yield { text };
+      }
+    }
+  })();
+};
 
 export const getQuizExplanationStream = async (term: Term, chapter: Chapter, userName: string) => {
   try {
