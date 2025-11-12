@@ -27,18 +27,18 @@ MoniQuest는 어린이들이 경제 용어를 모험처럼 익힐 수 있도록 
 
 **Environment variables & secrets · 환경 변수와 비밀 관리**
 **English**
-- Create a `.env.local` file and set `VITE_GOOGLE_API_KEY` for local runs. You may use the provided key `AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg`, but never commit it.
+- Create a `.env.local` file and set `VITE_GOOGLE_API_KEY` for local runs. Use the private key that was shared with you (or mint a new restricted key), but never commit the actual value.
 - Copy `public/config.template.json` to `public/config.json` during deployment and replace the placeholder with a **restricted** key (e.g., limit HTTP referrers to `https://ers123.github.io/MoniQuest/*`). The real file is ignored by git so secrets stay out of version control.
 - Optional: set `VITE_BASE_PATH=/MoniQuest/` when building for GitHub Pages. Leave it unset when deploying at the root of a custom domain.
 
 **한국어**
-- 로컬 실행 시 `.env.local` 파일에 `VITE_GOOGLE_API_KEY`를 설정하세요. 제공된 키 `AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg`를 사용할 수 있지만 절대 커밋하지 마세요.
+- 로컬 실행 시 `.env.local` 파일에 `VITE_GOOGLE_API_KEY`를 설정하세요. 전달받은 비공개 키(또는 새로 발급한 제한 키)를 사용하되 실제 값을 커밋하지 마세요.
 - 배포 전에 `public/config.template.json`을 `public/config.json`으로 복사한 뒤 자리 표시자를 **제한된** 키(예: `https://ers123.github.io/MoniQuest/*` HTTP referrer 한정)로 교체하세요. 실제 파일은 git에 무시되므로 비밀이 저장소에 노출되지 않습니다.
 - GitHub Pages에 배포할 때는 `VITE_BASE_PATH=/MoniQuest/`를 지정하고, 맞춤 도메인 루트에 배포할 때는 비워 두면 됩니다.
 
 ```bash
 # .env.local (local-only)
-VITE_GOOGLE_API_KEY=AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg
+VITE_GOOGLE_API_KEY=YOUR_RESTRICTED_GEMINI_KEY
 
 # GitHub Action secret example
 VITE_BASE_PATH=/MoniQuest/
@@ -77,11 +77,11 @@ The build output lives in `dist/`. Serve it with any static host that supports s
 ## Security · 보안 안내
 **English**
 - Review the [Security Policy](./.github/SECURITY.md) for how to report vulnerabilities and keep the Gemini key restricted to GitHub Pages origins.
-- Store the provided API key (`AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg`) only in local `.env.local` files or runtime `public/config.json` copies that are never committed. Rotate it immediately if exposure is suspected.
+- Store your Gemini API key only in local `.env.local` files or runtime `public/config.json` copies that are never committed. Rotate it immediately if exposure is suspected.
 
 **한국어**
 - 취약점 제보 방법과 GitHub Pages 도메인에 한정된 Gemini 키 관리 절차는 [보안 정책](./.github/SECURITY.md)을 참고하세요.
-- 제공된 API 키(`AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg`)는 로컬 `.env.local` 파일이나 배포 시 생성되는 `public/config.json`에만 보관하고, 저장소에 커밋하지 마세요. 유출이 의심되면 즉시 키를 교체하세요.
+- Gemini API 키는 로컬 `.env.local` 파일이나 배포 시 생성되는 `public/config.json`에만 보관하고, 저장소에 커밋하지 마세요. 유출이 의심되면 즉시 키를 교체하세요.
 
 ## Testing & Quality Checks · 테스트 및 품질 확인
 Run the Vite preview build locally to verify PWA behavior and offline mode:
