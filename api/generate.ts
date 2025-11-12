@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
 
-const GEMINI_MODEL_NAME = 'gemini-1.5-flash-latest';
+const GEMINI_MODEL_NAME = 'gemini-2.5-flash-lite';
 const DEFAULT_GENERATION_CONFIG = {
   temperature: 0.9,
   topP: 0.8,
