@@ -74,6 +74,15 @@ The build output lives in `dist/`. Serve it with any static host that supports s
 3. 워크플로에서 `npm install` 후 비밀을 주입한 `public/config.json`을 만든 뒤 `npm run build`를 실행하고, `dist/` 폴더를 `gh-pages` 브랜치로 게시하세요.
 4. 배포가 끝나면 <https://ers123.github.io/MoniQuest/> 에 접속하여 서비스 워커 등록과 설치 배너를 확인하세요.
 
+## Security · 보안 안내
+**English**
+- Review the [Security Policy](./.github/SECURITY.md) for how to report vulnerabilities and keep the Gemini key restricted to GitHub Pages origins.
+- Store the provided API key (`AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg`) only in local `.env.local` files or runtime `public/config.json` copies that are never committed. Rotate it immediately if exposure is suspected.
+
+**한국어**
+- 취약점 제보 방법과 GitHub Pages 도메인에 한정된 Gemini 키 관리 절차는 [보안 정책](./.github/SECURITY.md)을 참고하세요.
+- 제공된 API 키(`AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg`)는 로컬 `.env.local` 파일이나 배포 시 생성되는 `public/config.json`에만 보관하고, 저장소에 커밋하지 마세요. 유출이 의심되면 즉시 키를 교체하세요.
+
 ## Testing & Quality Checks · 테스트 및 품질 확인
 Run the Vite preview build locally to verify PWA behavior and offline mode:
 ```bash
