@@ -10,13 +10,13 @@ MoniQuest는 어린이들이 경제 용어를 모험처럼 익힐 수 있도록 
 ## Key Features · 주요 기능
 **English**
 - Installable PWA with `manifest.json`, service worker caching, and an offline fallback page.
-- AI coaching powered by the budget-friendly Gemini 1.5 Flash streaming API for explanations and chat.
+- AI coaching powered by the budget-friendly Gemini 2.5 Flash Lite streaming API for explanations and chat.
 - Randomized quiz order, answer options, and feedback tone to keep each playthrough fresh.
 - Local progress tracking with confetti celebrations when learners master a chapter.
 
 **한국어**
 - `manifest.json`, 서비스 워커 캐싱, 오프라인 대체 페이지를 갖춘 설치형 PWA 지원.
-- 저비용 Gemini 1.5 Flash 스트리밍 API로 제공되는 AI 선생님의 해설과 대화.
+- 저비용 Gemini 2.5 Flash Lite 스트리밍 API로 제공되는 AI 선생님의 해설과 대화.
 - 매번 다른 순서와 피드백으로 진행되는 퀴즈와 답변 옵션으로 반복감을 줄임.
 - 챕터 완수 시 로컬 진척도 저장과 폭죽 애니메이션으로 성취감을 강화.
 
