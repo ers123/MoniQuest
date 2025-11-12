@@ -20,44 +20,6 @@ const resolveBaseUrl = () => {
   }
 };
 
-const loadRuntimeConfig = async () => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.__MONIQUEST_CONFIG__ = window.__MONIQUEST_CONFIG__ || {};
-  const baseUrl = resolveBaseUrl();
-
-  if (!baseUrl) {
-    return;
-  }
-
-  try {
-    const configUrl = new URL('config.json', baseUrl).toString();
-    const response = await fetch(configUrl, { cache: 'no-store' });
-
-    if (response.ok) {
-      const contentType = response.headers.get('content-type') ?? '';
-
-      if (!contentType.includes('application/json')) {
-        return;
-      }
-
-      const config = await response.json();
-      if (config && typeof config === 'object') {
-        window.__MONIQUEST_CONFIG__ = {
-          ...window.__MONIQUEST_CONFIG__,
-          ...(config as Record<string, unknown>),
-        };
-      }
-    } else if (response.status !== 404) {
-      console.warn('Failed to load runtime config:', response.status, response.statusText);
-    }
-  } catch (error) {
-    console.warn('Runtime config fetch error:', error);
-  }
-};
-
 const registerServiceWorker = () => {
   if (!('serviceWorker' in navigator)) {
     return;
@@ -109,12 +71,6 @@ const registerServiceWorker = () => {
 };
 
 const startApp = async () => {
-  try {
-    await loadRuntimeConfig();
-  } catch (error) {
-    console.warn('Runtime config load failed; continuing with bundled defaults.', error);
-  }
-
   const rootElement = document.getElementById('root');
   if (!rootElement) {
     throw new Error('Could not find root element to mount to');

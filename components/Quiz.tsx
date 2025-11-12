@@ -1,7 +1,7 @@
 import React, { useState, useEffect, MouseEvent } from 'react';
 import { Chapter, Term } from '../types';
 import { useApp } from '../App';
-import { getQuizExplanationStream } from '../services/geminiService';
+import { getQuizExplanation } from '../services/geminiService';
 import Confetti from './Confetti';
 
 interface QuizProps {
@@ -105,16 +105,14 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     } else {
       setShowExplanation(true);
       setIsLoadingExplanation(true);
-      setExplanation(''); // Reset for streaming
+      setExplanation('');
       try {
-        const stream = await getQuizExplanationStream(currentTerm, chapter, userName);
-        setIsLoadingExplanation(false);
-        for await (const chunk of stream) {
-          setExplanation(prev => prev + chunk.text);
-        }
+        const explanationText = await getQuizExplanation(currentTerm, chapter, userName);
+        setExplanation(explanationText);
       } catch (error) {
-        console.error("Error streaming explanation:", error);
+        console.error("Error generating explanation:", error);
         setExplanation("이런! AI 선생님이 지금 조금 아픈가 봐요. 다시 시도해 주세요!");
+      } finally {
         setIsLoadingExplanation(false);
       }
     }

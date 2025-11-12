@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.4.0';
+const CACHE_VERSION = 'v1.5.0';
 const CACHE_NAME = `moniquest-cache-${CACHE_VERSION}`;
 
 const scopeUrl = self.registration ? new URL(self.registration.scope) : new URL(self.location.href);

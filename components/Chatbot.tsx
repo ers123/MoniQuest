@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatIcon, LiraAvatarIcon } from './icons';
 import { useApp } from '../App';
-import { getChatbotResponseStream } from '../services/geminiService';
+import { getChatbotResponse } from '../services/geminiService';
 
 const renderMarkdown = (text: string) => {
   if (!text) return null;
@@ -42,18 +42,14 @@ const ChatbotModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
         const aiMessageTemplate: Message = { sender: 'ai', text: '' };
         setMessages(prev => [...prev, aiMessageTemplate]);
-        
+
         try {
-            const stream = await getChatbotResponseStream(input, userName);
-            let responseText = '';
-            for await (const chunk of stream) {
-                responseText += chunk.text;
-                setMessages(prev => {
-                    const newMessages = [...prev];
-                    newMessages[newMessages.length - 1] = { ...aiMessageTemplate, text: responseText };
-                    return newMessages;
-                });
-            }
+            const responseText = await getChatbotResponse(input, userName);
+            setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = { ...aiMessageTemplate, text: responseText };
+                return newMessages;
+            });
         } catch (error) {
             console.error("Chatbot error:", error);
             setMessages(prev => {
