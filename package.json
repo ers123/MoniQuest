@@ -4,8 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/prepare-config.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/prepare-config.mjs",
     "build": "vite build",
+    "prepreview": "node scripts/prepare-config.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

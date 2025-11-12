@@ -28,12 +28,12 @@ MoniQuest는 어린이들이 경제 용어를 모험처럼 익힐 수 있도록 
 **Environment variables & secrets · 환경 변수와 비밀 관리**
 **English**
 - Create a `.env.local` file and set `VITE_GOOGLE_API_KEY` for local runs. Use the private key that was shared with you (or mint a new restricted key), but never commit the actual value.
-- Copy `public/config.template.json` to `public/config.json` during deployment and replace the placeholder with a **restricted** key (e.g., limit HTTP referrers to `https://ers123.github.io/MoniQuest/*`). The real file is ignored by git so secrets stay out of version control.
+- Copy `public/config.template.json` to `public/config.json` during deployment and replace the placeholder with a **restricted** key (e.g., limit HTTP referrers to `https://ers123.github.io/MoniQuest/*`). The real file is ignored by git so secrets stay out of version control. Local `npm run dev`, `npm run build`, and `npm run preview` automatically create the file from the template, so you only need to provide the secret when you have one.
 - The production build already defaults to the GitHub Pages path `/MoniQuest/`. Only set `VITE_BASE_PATH` if you deploy under a different subdirectory (for example, a custom domain or staging folder).
 
 **한국어**
 - 로컬 실행 시 `.env.local` 파일에 `VITE_GOOGLE_API_KEY`를 설정하세요. 전달받은 비공개 키(또는 새로 발급한 제한 키)를 사용하되 실제 값을 커밋하지 마세요.
-- 배포 전에 `public/config.template.json`을 `public/config.json`으로 복사한 뒤 자리 표시자를 **제한된** 키(예: `https://ers123.github.io/MoniQuest/*` HTTP referrer 한정)로 교체하세요. 실제 파일은 git에 무시되므로 비밀이 저장소에 노출되지 않습니다.
+- 배포 전에 `public/config.template.json`을 `public/config.json`으로 복사한 뒤 자리 표시자를 **제한된** 키(예: `https://ers123.github.io/MoniQuest/*` HTTP referrer 한정)로 교체하세요. 실제 파일은 git에 무시되므로 비밀이 저장소에 노출되지 않습니다. 로컬에서는 `npm run dev`, `npm run build`, `npm run preview` 명령이 템플릿을 기반으로 자동 생성하므로, 실제 비밀 값이 있을 때만 교체하면 됩니다.
 - 프로덕션 빌드는 기본적으로 GitHub Pages 경로인 `/MoniQuest/`를 사용합니다. 다른 하위 경로나 도메인에 배포할 때만 `VITE_BASE_PATH`를 설정하세요.
 
 ```bash
@@ -79,14 +79,14 @@ The build output lives in `dist/`. Serve it with any static host that supports s
 **English**
 - ✅ **What is GitHub Pages serving?** Confirm the latest Actions run for “Deploy MoniQuest to GitHub Pages” is green and points at the `https://ers123.github.io/MoniQuest/` URL.
 - ✅ **Correct base path?** Ensure `vite.config.ts` keeps `base` at `/MoniQuest/` (or override with `VITE_BASE_PATH`) so static assets resolve in production.
-- ✅ **Runtime config present?** The workflow copies `public/config.template.json` to `public/config.json`. Update the secret if you rotate keys, or create the file manually when deploying outside GitHub Actions.
+- ✅ **Runtime config present?** The workflow (and local npm scripts) copy `public/config.template.json` to `public/config.json`. Update the secret if you rotate keys, or provide the file manually only when deploying from another CI/CD tool.
 - ✅ **Artifact upload?** The workflow’s `actions/upload-pages-artifact` step must report success so `dist/` is actually published.
 - ✅ **Cache refresh?** After redeploying, bump `CACHE_VERSION` in `public/sw.js` and clear browser storage (DevTools ▸ Application ▸ Clear site data) to avoid stale blank caches.
 
 **한국어**
 - ✅ **Pages에서 무엇을 배포하나요?** “Deploy MoniQuest to GitHub Pages” 작업이 성공(Success) 상태인지 확인하고, 링크가 `https://ers123.github.io/MoniQuest/`를 가리키는지 점검하세요.
 - ✅ **Vite base 경로는?** 프로덕션에서 정적 자산을 불러오려면 `vite.config.ts`의 `base`가 `/MoniQuest/`인지(또는 `VITE_BASE_PATH`로 덮어쓰는지) 확인하세요.
-- ✅ **런타임 설정 파일 존재 여부** 워크플로가 `public/config.template.json`을 `public/config.json`으로 복사합니다. 키를 교체했다면 시크릿을 업데이트하거나, GitHub Actions 외부 배포 시 수동으로 파일을 만들어 주세요.
+- ✅ **런타임 설정 파일 존재 여부** 워크플로와 로컬 npm 스크립트가 `public/config.template.json`을 `public/config.json`으로 복사합니다. 키를 교체했다면 시크릿을 업데이트하고, 다른 CI/CD에서 배포할 때만 수동으로 파일을 준비하세요.
 - ✅ **산출물 업로드** `actions/upload-pages-artifact` 단계가 성공해야 `dist/`가 실제로 배포됩니다.
 - ✅ **서비스 워커 캐시 초기화** 새 버전을 배포했다면 `public/sw.js`의 `CACHE_VERSION`을 올리고 브라우저 저장소(개발자 도구 ▸ Application ▸ Clear site data)를 비운 뒤 강력 새로고침 하세요.
 
@@ -119,6 +119,8 @@ While previewing, try toggling the network tab to **Offline** in your browser de
 │   ├── offline.html        # Friendly offline message surfaced when network fails
 │   ├── moni_icon.png       # PWA install icon
 │   └── moni_image.png      # Open Graph / social preview image
+├── scripts/
+│   └── prepare-config.mjs  # Copies config template and injects optional API secrets
 ├── index.html              # HTML shell with Open Graph & Twitter metadata
 ├── index.tsx               # Entry point that mounts the React app & registers SW
 └── README.md               # This guide (English & Korean)
