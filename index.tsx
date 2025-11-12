@@ -10,9 +10,10 @@ const resolveBaseUrl = () => {
 
   const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
   const configuredBase = metaEnv.BASE_URL ?? '/';
+  const normalizedBase = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
 
   try {
-    return new URL(configuredBase, window.location.href);
+    return new URL(normalizedBase, window.location.href);
   } catch (error) {
     console.warn('Base URL resolution failed, defaulting to current directory.', error);
     return new URL('./', window.location.href);
@@ -36,6 +37,12 @@ const loadRuntimeConfig = async () => {
     const response = await fetch(configUrl, { cache: 'no-store' });
 
     if (response.ok) {
+      const contentType = response.headers.get('content-type') ?? '';
+
+      if (!contentType.includes('application/json')) {
+        return;
+      }
+
       const config = await response.json();
       if (config && typeof config === 'object') {
         window.__MONIQUEST_CONFIG__ = {

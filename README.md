@@ -29,19 +29,19 @@ MoniQuest는 어린이들이 경제 용어를 모험처럼 익힐 수 있도록 
 **English**
 - Create a `.env.local` file and set `VITE_GOOGLE_API_KEY` for local runs. Use the private key that was shared with you (or mint a new restricted key), but never commit the actual value.
 - Copy `public/config.template.json` to `public/config.json` during deployment and replace the placeholder with a **restricted** key (e.g., limit HTTP referrers to `https://ers123.github.io/MoniQuest/*`). The real file is ignored by git so secrets stay out of version control.
-- Optional: set `VITE_BASE_PATH=/MoniQuest/` when building for GitHub Pages. Leave it unset when deploying at the root of a custom domain.
+- The production build already defaults to the GitHub Pages path `/MoniQuest/`. Only set `VITE_BASE_PATH` if you deploy under a different subdirectory (for example, a custom domain or staging folder).
 
 **한국어**
 - 로컬 실행 시 `.env.local` 파일에 `VITE_GOOGLE_API_KEY`를 설정하세요. 전달받은 비공개 키(또는 새로 발급한 제한 키)를 사용하되 실제 값을 커밋하지 마세요.
 - 배포 전에 `public/config.template.json`을 `public/config.json`으로 복사한 뒤 자리 표시자를 **제한된** 키(예: `https://ers123.github.io/MoniQuest/*` HTTP referrer 한정)로 교체하세요. 실제 파일은 git에 무시되므로 비밀이 저장소에 노출되지 않습니다.
-- GitHub Pages에 배포할 때는 `VITE_BASE_PATH=/MoniQuest/`를 지정하고, 맞춤 도메인 루트에 배포할 때는 비워 두면 됩니다.
+- 프로덕션 빌드는 기본적으로 GitHub Pages 경로인 `/MoniQuest/`를 사용합니다. 다른 하위 경로나 도메인에 배포할 때만 `VITE_BASE_PATH`를 설정하세요.
 
 ```bash
 # .env.local (local-only)
 VITE_GOOGLE_API_KEY=YOUR_RESTRICTED_GEMINI_KEY
 
-# GitHub Action secret example
-VITE_BASE_PATH=/MoniQuest/
+# GitHub Action secret example (override only when needed)
+# VITE_BASE_PATH=/custom-subdir/
 ```
 
 **Installation · 설치**
@@ -63,13 +63,13 @@ The build output lives in `dist/`. Serve it with any static host that supports s
 
 ## Deploying to GitHub Pages · GitHub Pages 배포
 **English**
-1. Store `VITE_BASE_PATH=/MoniQuest/` and `VITE_GOOGLE_API_KEY` as GitHub Action secrets. The workflow can echo them into `public/config.json` using the new template before running `npm run build`.
+1. Store `VITE_GOOGLE_API_KEY` as a GitHub Action secret. The build already targets `/MoniQuest/`, so only add `VITE_BASE_PATH` if you need a different subdirectory.
 2. Restrict the Google API key to `https://ers123.github.io/MoniQuest/*` (HTTP referrers) inside Google Cloud Console so the leaked key is useless elsewhere.
 3. Add a Pages workflow that runs `npm install`, copies `public/config.template.json` to `public/config.json` while injecting the secrets, executes `npm run build`, and publishes the `dist/` folder to the `gh-pages` branch.
 4. After deployment, open <https://ers123.github.io/MoniQuest/> to confirm the service worker registers and the install prompt appears.
 
 **한국어**
-1. GitHub Actions 시크릿에 `VITE_BASE_PATH=/MoniQuest/`, `VITE_GOOGLE_API_KEY`를 보관하고, 워크플로에서 템플릿을 `public/config.json`으로 복사하며 값을 주입하세요.
+1. GitHub Actions 시크릿에 `VITE_GOOGLE_API_KEY`만 저장하면 됩니다. 빌드는 기본적으로 `/MoniQuest/` 경로를 대상으로 하므로 다른 하위 경로가 필요할 때만 `VITE_BASE_PATH`를 추가하세요.
 2. Google Cloud Console에서 API 키를 `https://ers123.github.io/MoniQuest/*` HTTP referrer로 제한해 유출되더라도 다른 곳에서 사용할 수 없게 하세요.
 3. 워크플로에서 `npm install` 후 비밀을 주입한 `public/config.json`을 만든 뒤 `npm run build`를 실행하고, `dist/` 폴더를 `gh-pages` 브랜치로 게시하세요.
 4. 배포가 끝나면 <https://ers123.github.io/MoniQuest/> 에 접속하여 서비스 워커 등록과 설치 배너를 확인하세요.

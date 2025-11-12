@@ -4,11 +4,14 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
-    const configuredBase = env.VITE_BASE_PATH || './';
-    const base = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
+    const explicitBase = env.VITE_BASE_PATH;
+    const repoBase = '/MoniQuest/';
+    const fallbackBase = mode === 'production' ? repoBase : '/';
+    const configuredBase = explicitBase || fallbackBase;
+    const normalizedBase = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
 
     return {
-      base,
+      base: normalizedBase,
       server: {
         port: 3000,
         host: '0.0.0.0',
