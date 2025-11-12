@@ -1,10 +1,35 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <base href="%BASE_URL%" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoQuest: 경제탐험대</title>
+  <meta name="theme-color" content="#7c3aed" />
+  <meta name="application-name" content="MoniQuest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="MoniQuest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="msapplication-TileColor" content="#7c3aed" />
+  <meta name="description" content="어린이들이 경제 개념을 이야기와 퀴즈로 익히는 MoniQuest" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" href="./moni_icon.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="./moni_icon.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:site_name" content="MoniQuest" />
+  <meta property="og:title" content="MoniQuest" />
+  <meta property="og:description" content="퀴즈와 AI 선생님과 함께 떠나는 어린이 경제 모험!" />
+  <meta property="og:image" content="https://ers123.github.io/MoniQuest/moni_image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="MoniQuest 앱 소개 이미지" />
+  <meta property="og:url" content="https://ers123.github.io/MoniQuest/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MoniQuest" />
+  <meta name="twitter:description" content="AI 선생님 리라와 경제 모험을 떠나봐요!" />
+  <meta name="twitter:image" content="https://ers123.github.io/MoniQuest/moni_image.png" />
+  <title>MoniQuest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
@@ -30,6 +55,6 @@
 </head>
 <body class="bg-purple-50 text-gray-800">
   <div id="root"></div>
-  <script type="module" src="/index.tsx"></script>
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>
