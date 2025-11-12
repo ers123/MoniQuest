@@ -3,17 +3,36 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
+const resolveBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+  const configuredBase = metaEnv.BASE_URL ?? '/';
+
+  try {
+    return new URL(configuredBase, window.location.href);
+  } catch (error) {
+    console.warn('Base URL resolution failed, defaulting to current directory.', error);
+    return new URL('./', window.location.href);
+  }
+};
+
 const loadRuntimeConfig = async () => {
   if (typeof window === 'undefined') {
     return;
   }
 
   window.__MONIQUEST_CONFIG__ = window.__MONIQUEST_CONFIG__ || {};
-  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
-  const baseUrl = metaEnv?.BASE_URL || '/';
+  const baseUrl = resolveBaseUrl();
+
+  if (!baseUrl) {
+    return;
+  }
 
   try {
-    const configUrl = new URL('config.json', window.location.origin + baseUrl).toString();
+    const configUrl = new URL('config.json', baseUrl).toString();
     const response = await fetch(configUrl, { cache: 'no-store' });
 
     if (response.ok) {
@@ -52,11 +71,17 @@ const registerServiceWorker = () => {
   };
 
   window.addEventListener('load', () => {
-    const baseUrl = (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.BASE_URL || '/';
-    const swUrl = new URL('sw.js', window.location.origin + baseUrl).href;
+    const baseUrl = resolveBaseUrl();
+
+    if (!baseUrl) {
+      return;
+    }
+
+    const swUrl = new URL('sw.js', baseUrl).toString();
+    const scopeUrl = baseUrl.href.endsWith('/') ? baseUrl.href : `${baseUrl.href}/`;
 
     navigator.serviceWorker
-      .register(swUrl, { scope: baseUrl })
+      .register(swUrl, { scope: scopeUrl })
       .then(registration => {
         triggerSkipWaiting(registration.waiting);
         registration.addEventListener('updatefound', () => {
