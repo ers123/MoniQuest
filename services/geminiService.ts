@@ -1,7 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { Term, Chapter } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+const apiKey = metaEnv?.VITE_GOOGLE_API_KEY || 'AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg';
+
+const ai = new GoogleGenAI({ apiKey });
+const MODEL_NAME = 'models/gemini-flash-lite-latest';
 
 export const getQuizExplanationStream = async (term: Term, chapter: Chapter, userName: string) => {
   try {
@@ -16,13 +20,14 @@ export const getQuizExplanationStream = async (term: Term, chapter: Chapter, use
 
       그리고 이 챕터에서 함께 배우는 다른 중요한 단어들은 '${chapter.secondary_terms.join(', ')}'가 있어. 이 단어들도 자연스럽게 활용해서 설명해주면 '${userName}'가 더 잘 이해할 수 있을 거야.
 
-      학생의 눈높이에 맞춰서, '${userName}'의 이름을 부르면서 아주 쉽고 재미있게, 새로운 비유나 예시를 들어 2~3문장으로 짧게 설명해줘. 
+      학생의 눈높이에 맞춰서, '${userName}'의 이름을 부르면서 아주 쉽고 재미있게, 새로운 비유나 예시를 들어 2~3문장으로 짧게 설명해줘.
+      설명할 때마다 감탄사와 말투에 변화를 줘서 반복되는 느낌이 들지 않도록 해줘.
       괜찮다고 격려하면서 시작해줘. 예를 들면: "${userName}아, 괜찮아! '${term.term}'는 말이야..." 처럼 말이야.
       반드시 한국어로 대답해줘.
     `;
     
     const response = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: MODEL_NAME,
       contents: [{ parts: [{ text: prompt }] }],
     });
 
@@ -44,12 +49,13 @@ export const getChatbotResponseStream = async (question: string, userName: strin
       1. 경제 용어에 대해서만 대답해야 해.
       2. 만약 경제와 관련 없는 질문을 하면, "나는 경제 이야기만 들려줄 수 있어! 궁금한 경제 용어가 있니?"라고 귀엽게 대답해줘.
       3. 답변은 항상 2~3문장으로, 아주 쉽고 재미있는 비유를 들어서 설명해줘.
-      4. 항상 '${userName}'의 이름을 부르며 친근하게 말해줘.
-      5. 반드시 한국어로만 대답해.
+      4. 매번 같은 표현이나 이모지를 반복하지 말고, 표현과 어투에 자연스러운 변화를 줘.
+      5. 항상 '${userName}'의 이름을 부르며 친근하게 말해줘.
+      6. 반드시 한국어로만 대답해.
     `;
-    
+
     const response = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
+      model: MODEL_NAME,
       contents: [{ parts: [{ text: prompt }] }],
     });
 
