@@ -1,12 +1,16 @@
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.2.0';
 const CACHE_NAME = `moniquest-cache-${CACHE_VERSION}`;
-const OFFLINE_URL = '/offline.html';
+
+const scopeUrl = self.registration ? new URL(self.registration.scope) : new URL(self.location.href);
+const toScopeUrl = (path = './') => new URL(path, scopeUrl).toString();
+const OFFLINE_URL = toScopeUrl('offline.html');
+
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/moni_icon.png',
-  '/moni_image.png',
+  toScopeUrl('./'),
+  toScopeUrl('index.html'),
+  toScopeUrl('manifest.json'),
+  toScopeUrl('moni_icon.png'),
+  toScopeUrl('moni_image.png'),
   OFFLINE_URL,
 ];
 

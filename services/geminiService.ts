@@ -1,10 +1,35 @@
 import { GoogleGenAI } from '@google/genai';
 import { Term, Chapter } from '../types';
 
-const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
-const apiKey = metaEnv?.VITE_GOOGLE_API_KEY || 'AIzaSyB0SgVOSKMr671SmVrkY8CI8CuGoDtj6yg';
+declare global {
+  interface Window {
+    __MONIQUEST_CONFIG__?: {
+      googleApiKey?: string;
+    };
+  }
+}
 
-const ai = new GoogleGenAI({ apiKey });
+const getApiKey = () => {
+  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  const runtimeKey = typeof window !== 'undefined' ? window.__MONIQUEST_CONFIG__?.googleApiKey : undefined;
+  const envKey = metaEnv?.VITE_GOOGLE_API_KEY;
+  const apiKey = envKey || runtimeKey;
+
+  if (!apiKey) {
+    throw new Error('Google API key is missing. Set VITE_GOOGLE_API_KEY or provide window.__MONIQUEST_CONFIG__.googleApiKey.');
+  }
+
+  return apiKey;
+};
+
+let ai: GoogleGenAI | null = null;
+
+const getClient = () => {
+  if (!ai) {
+    ai = new GoogleGenAI({ apiKey: getApiKey() });
+  }
+  return ai;
+};
 export const GEMINI_MODEL_NAME = 'models/gemini-flash-lite-latest';
 
 const DEFAULT_GENERATION_CONFIG = {
@@ -14,7 +39,7 @@ const DEFAULT_GENERATION_CONFIG = {
 };
 
 const generateStream = async (prompt: string) => {
-  const response = await ai.models.generateContentStream({
+  const response = await getClient().models.generateContentStream({
     model: GEMINI_MODEL_NAME,
     contents: prompt,
     config: DEFAULT_GENERATION_CONFIG,
