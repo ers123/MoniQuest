@@ -1,12 +1,47 @@
 import React, { useState, useEffect, MouseEvent } from 'react';
 import { Chapter, Term } from '../types';
 import { useApp } from '../App';
-import { getQuizExplanationStream } from '../services/geminiService';
+import { getQuizExplanation } from '../services/geminiService';
 import Confetti from './Confetti';
 
 interface QuizProps {
   chapter: Chapter;
 }
+
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const array = [...items];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
+const pickRandom = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
+
+const MOTIVATION_MESSAGES = [
+  '이번 문제는 어떤 경제 모험일까? 상상력을 발휘해봐! ✨',
+  '리라와 함께 새로운 단어를 탐험해보자! 🧭',
+  '단서를 잘 모으면 정답이 더 가까워져! 🔍',
+  '차근차근 생각하면 어떤 문제든 해결할 수 있어! 💡',
+  '오늘도 한 걸음 성장 중! 다음 힌트를 찾아볼까? 🚀'
+];
+
+const CORRECT_MESSAGES = [
+  '멋지다! 이번엔 경제 탐험가답게 해결했어! 🌟',
+  '와, 정확해! 너의 경제 감각이 빛나고 있어! 🎉',
+  '완벽해! 다음 모험도 기대돼! 🏆',
+  '굿잡! 네 판단력이 정말 날카롭다! ⚡',
+  '정답! 경제 요정들도 깜짝 놀랐어! 🧚'
+];
+
+const ENCOURAGEMENT_MESSAGES = [
+  '괜찮아! 잠깐 숨을 고르고, 다른 단서를 찾아보자! 🍀',
+  '이번에는 아쉽지만, 다음엔 더 멋지게 할 수 있어! 💪',
+  '실수는 성장의 친구야! 함께 다시 도전해보자! 🌈',
+  '이제 힌트를 얻었으니 다음엔 꼭 맞힐 수 있어! 🔁',
+  '조금만 더 생각해보면 정답이 보일 거야! 🔎'
+];
 
 const renderMarkdown = (text: string) => {
     if (!text) return null;
@@ -27,16 +62,24 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
   const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
   const [shuffledTerms, setShuffledTerms] = useState<Term[]>([]);
   const [confettiPosition, setConfettiPosition] = useState<{ x: number; y: number } | null>(null);
+  const [questionPrompts, setQuestionPrompts] = useState<string[]>(() => shuffleArray(MOTIVATION_MESSAGES));
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [feedbackTone, setFeedbackTone] = useState<'correct' | 'incorrect' | null>(null);
 
 
   useEffect(() => {
-    const array = [...chapter.terms];
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    setShuffledTerms(array);
+    const randomizedTerms = shuffleArray(
+      chapter.terms.map(term => ({
+        ...term,
+        quiz_options: shuffleArray(term.quiz_options),
+      }))
+    );
+    setShuffledTerms(randomizedTerms);
   }, [chapter]);
+
+  useEffect(() => {
+    setQuestionPrompts(shuffleArray(MOTIVATION_MESSAGES));
+  }, [chapter.id]);
 
   useEffect(() => {
     if (isFinished) {
@@ -50,6 +93,8 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     setSelectedAnswer(answer);
     const correct = answer === currentTerm.quiz_answer;
     setIsCorrect(correct);
+    setFeedbackTone(correct ? 'correct' : 'incorrect');
+    setFeedbackMessage(correct ? pickRandom(CORRECT_MESSAGES) : pickRandom(ENCOURAGEMENT_MESSAGES));
 
     if (correct) {
       setScore(s => s + 1);
@@ -60,16 +105,14 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     } else {
       setShowExplanation(true);
       setIsLoadingExplanation(true);
-      setExplanation(''); // Reset for streaming
+      setExplanation('');
       try {
-        const stream = await getQuizExplanationStream(currentTerm, chapter, userName);
-        setIsLoadingExplanation(false);
-        for await (const chunk of stream) {
-          setExplanation(prev => prev + chunk.text);
-        }
+        const explanationText = await getQuizExplanation(currentTerm, chapter, userName);
+        setExplanation(explanationText);
       } catch (error) {
-        console.error("Error streaming explanation:", error);
+        console.error("Error generating explanation:", error);
         setExplanation("이런! AI 선생님이 지금 조금 아픈가 봐요. 다시 시도해 주세요!");
+      } finally {
         setIsLoadingExplanation(false);
       }
     }
@@ -81,6 +124,8 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     setShowExplanation(false);
     setExplanation('');
     setConfettiPosition(null);
+    setFeedbackMessage(null);
+    setFeedbackTone(null);
     if (currentQuestionIndex < shuffledTerms.length - 1) {
       setCurrentQuestionIndex(i => i + 1);
     } else {
@@ -103,6 +148,7 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
   }
 
   const currentTerm = shuffledTerms[currentQuestionIndex];
+  const currentPrompt = questionPrompts[currentQuestionIndex % questionPrompts.length];
 
   if (isFinished) {
     const mastery = score / shuffledTerms.length;
@@ -150,6 +196,7 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
         <p className="text-gray-600 mt-2">
           문제 {currentQuestionIndex + 1} / {shuffledTerms.length}
         </p>
+        <p className="text-sm text-purple-500 mt-1">{currentPrompt}</p>
       </header>
 
       <div className="bg-white/70 p-6 rounded-2xl shadow-md">
@@ -173,10 +220,19 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
           ))}
         </div>
       </div>
-      
+
+      {feedbackTone === 'correct' && feedbackMessage && (
+        <p className="mt-4 text-center text-green-600 font-semibold animate-fade-in">
+          {feedbackMessage}
+        </p>
+      )}
+
       {showExplanation && (
         <div className="mt-6 bg-yellow-100 border-l-4 border-yellow-400 p-4 rounded-r-lg animate-fade-in">
           <h3 className="font-bold text-yellow-800 font-gamja text-xl">리라의 힌트! ✨</h3>
+          {feedbackTone === 'incorrect' && feedbackMessage && (
+            <p className="text-yellow-900 mt-2 font-semibold">{feedbackMessage}</p>
+          )}
           {isLoadingExplanation ? (
              <div className="flex items-center text-yellow-700 mt-2">
                 <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">

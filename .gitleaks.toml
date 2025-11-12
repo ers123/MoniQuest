@@ -1,0 +1,11 @@
+title = "MoniQuest gitleaks configuration"
+
+[[rules]]
+id = "google-api-key"
+description = "Google API key pattern"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+tags = ["key", "google"]
+
+[allowlist]
+# Ignore the runtime config template placeholder
+paths = ["public/config.template.json"]
