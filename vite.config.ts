@@ -6,7 +6,13 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     const explicitBase = env.VITE_BASE_PATH;
     const repoBase = '/MoniQuest/';
-    const fallbackBase = mode === 'production' ? repoBase : '/';
+
+    // Auto-detect Vercel environment
+    const isVercel = process.env.VERCEL === '1' || env.VERCEL === '1';
+    const fallbackBase = mode === 'production'
+      ? (isVercel ? '/' : repoBase)  // Use / for Vercel, /MoniQuest/ for GitHub Pages
+      : '/';
+
     const configuredBase = explicitBase || fallbackBase;
     const normalizedBase = configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
 
