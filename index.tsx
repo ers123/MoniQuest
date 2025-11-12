@@ -109,7 +109,11 @@ const registerServiceWorker = () => {
 };
 
 const startApp = async () => {
-  await loadRuntimeConfig();
+  try {
+    await loadRuntimeConfig();
+  } catch (error) {
+    console.warn('Runtime config load failed; continuing with bundled defaults.', error);
+  }
 
   const rootElement = document.getElementById('root');
   if (!rootElement) {
@@ -123,7 +127,11 @@ const startApp = async () => {
     </React.StrictMode>
   );
 
-  registerServiceWorker();
+  try {
+    registerServiceWorker();
+  } catch (error) {
+    console.warn('Service worker registration skipped.', error);
+  }
 };
 
 startApp();

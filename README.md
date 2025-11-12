@@ -65,14 +65,30 @@ The build output lives in `dist/`. Serve it with any static host that supports s
 **English**
 1. Store `VITE_GOOGLE_API_KEY` as a GitHub Action secret. The build already targets `/MoniQuest/`, so only add `VITE_BASE_PATH` if you need a different subdirectory.
 2. Restrict the Google API key to `https://ers123.github.io/MoniQuest/*` (HTTP referrers) inside Google Cloud Console so the leaked key is useless elsewhere.
-3. Add a Pages workflow that runs `npm install`, copies `public/config.template.json` to `public/config.json` while injecting the secrets, executes `npm run build`, and publishes the `dist/` folder to the `gh-pages` branch.
+3. The included workflow at [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml) handles `npm ci`, copies `public/config.template.json` to `public/config.json`, injects the secret key, and publishes the Vite `dist/` output via `actions/deploy-pages`.
 4. After deployment, open <https://ers123.github.io/MoniQuest/> to confirm the service worker registers and the install prompt appears.
 
 **한국어**
 1. GitHub Actions 시크릿에 `VITE_GOOGLE_API_KEY`만 저장하면 됩니다. 빌드는 기본적으로 `/MoniQuest/` 경로를 대상으로 하므로 다른 하위 경로가 필요할 때만 `VITE_BASE_PATH`를 추가하세요.
 2. Google Cloud Console에서 API 키를 `https://ers123.github.io/MoniQuest/*` HTTP referrer로 제한해 유출되더라도 다른 곳에서 사용할 수 없게 하세요.
-3. 워크플로에서 `npm install` 후 비밀을 주입한 `public/config.json`을 만든 뒤 `npm run build`를 실행하고, `dist/` 폴더를 `gh-pages` 브랜치로 게시하세요.
+3. [`.github/workflows/deploy-pages.yml`](./.github/workflows/deploy-pages.yml) 워크플로가 `npm ci` 실행 후 `public/config.template.json`을 복사하여 비밀 키를 주입하고, `actions/deploy-pages`로 Vite `dist/` 결과를 게시합니다.
 4. 배포가 끝나면 <https://ers123.github.io/MoniQuest/> 에 접속하여 서비스 워커 등록과 설치 배너를 확인하세요.
+
+### Deployment checklist & troubleshooting · 배포 체크리스트와 점검
+
+**English**
+- ✅ **What is GitHub Pages serving?** Confirm the latest Actions run for “Deploy MoniQuest to GitHub Pages” is green and points at the `https://ers123.github.io/MoniQuest/` URL.
+- ✅ **Correct base path?** Ensure `vite.config.ts` keeps `base` at `/MoniQuest/` (or override with `VITE_BASE_PATH`) so static assets resolve in production.
+- ✅ **Runtime config present?** The workflow copies `public/config.template.json` to `public/config.json`. Update the secret if you rotate keys, or create the file manually when deploying outside GitHub Actions.
+- ✅ **Artifact upload?** The workflow’s `actions/upload-pages-artifact` step must report success so `dist/` is actually published.
+- ✅ **Cache refresh?** After redeploying, bump `CACHE_VERSION` in `public/sw.js` and clear browser storage (DevTools ▸ Application ▸ Clear site data) to avoid stale blank caches.
+
+**한국어**
+- ✅ **Pages에서 무엇을 배포하나요?** “Deploy MoniQuest to GitHub Pages” 작업이 성공(Success) 상태인지 확인하고, 링크가 `https://ers123.github.io/MoniQuest/`를 가리키는지 점검하세요.
+- ✅ **Vite base 경로는?** 프로덕션에서 정적 자산을 불러오려면 `vite.config.ts`의 `base`가 `/MoniQuest/`인지(또는 `VITE_BASE_PATH`로 덮어쓰는지) 확인하세요.
+- ✅ **런타임 설정 파일 존재 여부** 워크플로가 `public/config.template.json`을 `public/config.json`으로 복사합니다. 키를 교체했다면 시크릿을 업데이트하거나, GitHub Actions 외부 배포 시 수동으로 파일을 만들어 주세요.
+- ✅ **산출물 업로드** `actions/upload-pages-artifact` 단계가 성공해야 `dist/`가 실제로 배포됩니다.
+- ✅ **서비스 워커 캐시 초기화** 새 버전을 배포했다면 `public/sw.js`의 `CACHE_VERSION`을 올리고 브라우저 저장소(개발자 도구 ▸ Application ▸ Clear site data)를 비운 뒤 강력 새로고침 하세요.
 
 ## Security · 보안 안내
 **English**
@@ -99,6 +115,7 @@ While previewing, try toggling the network tab to **Offline** in your browser de
 ├── public/
 │   ├── manifest.json       # PWA manifest referencing app & shortcut icons
 │   ├── sw.js               # Service worker with versioned caching & offline fallback
+│   ├── 404.html            # Redirect helper so GitHub Pages history routes stay alive
 │   ├── offline.html        # Friendly offline message surfaced when network fails
 │   ├── moni_icon.png       # PWA install icon
 │   └── moni_image.png      # Open Graph / social preview image
