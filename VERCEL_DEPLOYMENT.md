@@ -320,4 +320,4 @@ For issues:
 
 **Last Updated**: 2025-11-12
 **Cache Version**: v1.6.0
-**Node.js Runtime**: 20.x
+**Node.js Runtime**: nodejs (Vercel auto-detects version)
