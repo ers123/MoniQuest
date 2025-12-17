@@ -59,7 +59,7 @@ const vibrate = (pattern: number | number[]) => {
 };
 
 const Quiz: React.FC<QuizProps> = ({ chapter }) => {
-  const { userName, chapters, updateChapterScore, goToHome, goToChapter } = useApp();
+  const { userName, chapters, updateChapterScore, goToHome, goToChapter, saveQuizSession, loadQuizSession, clearQuizSession } = useApp();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -74,8 +74,22 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<'correct' | 'incorrect' | null>(null);
   const [showLiraHint, setShowLiraHint] = useState(false);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [savedSession, setSavedSession] = useState<any>(null);
 
+  // Check for saved session on mount
   useEffect(() => {
+    const session = loadQuizSession();
+    if (session && session.chapterId === chapter.id) {
+      setSavedSession(session);
+      setShowResumeDialog(true);
+    } else {
+      // No saved session or different chapter - start fresh
+      initializeFreshQuiz();
+    }
+  }, [chapter.id]);
+
+  const initializeFreshQuiz = () => {
     const randomizedTerms = shuffleArray(
       chapter.terms.map(term => ({
         ...term,
@@ -83,7 +97,41 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
       }))
     );
     setShuffledTerms(randomizedTerms);
-  }, [chapter]);
+    setCurrentQuestionIndex(0);
+    setScore(0);
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setShowExplanation(false);
+    setExplanation('');
+  };
+
+  const resumeSavedQuiz = () => {
+    if (!savedSession) return;
+
+    // Reconstruct terms in the saved order
+    const reconstructedTerms = savedSession.shuffledTermIds.map((termId: number) => {
+      const term = chapter.terms.find(t => {
+        // Assuming terms have an id or we can use their name as identifier
+        return chapter.terms.indexOf(t) === termId;
+      });
+      if (!term) return null;
+      return {
+        ...term,
+        quiz_options: shuffleArray(term.quiz_options),
+      };
+    }).filter(Boolean) as Term[];
+
+    setShuffledTerms(reconstructedTerms);
+    setCurrentQuestionIndex(savedSession.currentQuestionIndex);
+    setScore(savedSession.score);
+    setShowResumeDialog(false);
+  };
+
+  const startFreshQuiz = () => {
+    clearQuizSession();
+    initializeFreshQuiz();
+    setShowResumeDialog(false);
+  };
 
   useEffect(() => {
     setQuestionPrompts(shuffleArray(MOTIVATION_MESSAGES));
@@ -104,9 +152,22 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     setFeedbackTone(correct ? 'correct' : 'incorrect');
     setFeedbackMessage(correct ? pickRandom(CORRECT_MESSAGES) : pickRandom(ENCOURAGEMENT_MESSAGES));
 
+    const newScore = correct ? score + 1 : score;
+
+    // Save session after answer
+    const session = {
+      chapterId: chapter.id,
+      currentQuestionIndex,
+      score: newScore,
+      shuffledTermIds: shuffledTerms.map((_, idx) => idx),
+      answeredQuestions: [],
+      startedAt: new Date().toISOString(),
+    };
+    saveQuizSession(session);
+
     if (correct) {
       vibrate(50); // Short vibration for correct
-      setScore(s => s + 1);
+      setScore(newScore);
       setConfettiPosition({ x: event.clientX, y: event.clientY });
       setTimeout(() => {
         nextQuestion();
@@ -139,11 +200,77 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     setFeedbackTone(null);
     setShowLiraHint(false);
     if (currentQuestionIndex < shuffledTerms.length - 1) {
-      setCurrentQuestionIndex(i => i + 1);
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
+      // Save session with new question index
+      const session = {
+        chapterId: chapter.id,
+        currentQuestionIndex: newIndex,
+        score: score,
+        shuffledTermIds: shuffledTerms.map((_, idx) => idx),
+        answeredQuestions: [],
+        startedAt: new Date().toISOString(),
+      };
+      saveQuizSession(session);
     } else {
       setIsFinished(true);
+      // Clear session when quiz is finished
+      clearQuizSession();
     }
   };
+
+  // Show resume dialog if there's a saved session
+  if (showResumeDialog && savedSession) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)] px-4">
+        <div className="glass rounded-3xl p-8 max-w-md w-full animate-scale-in">
+          <LiraMascot size="lg" mood="happy" className="mx-auto mb-4" />
+          <h2 className="text-2xl font-gamja gradient-text mb-3 text-center">
+            저장된 퀴즈가 있어요!
+          </h2>
+          <p className="text-gray-700 text-center mb-6 leading-relaxed">
+            {chapter.title} 퀴즈를 <strong className="text-purple-600">문제 {savedSession.currentQuestionIndex + 1}번</strong>까지 풀었어요.
+            <br />
+            이어서 풀까요, 아니면 처음부터 다시 시작할까요?
+          </p>
+
+          <div className="bg-purple-50 rounded-xl p-4 mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-600">진행 상황</span>
+              <span className="text-sm font-bold text-purple-600">
+                {savedSession.currentQuestionIndex} / {chapter.terms.length}
+              </span>
+            </div>
+            <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
+              <div
+                className="h-full progress-bar rounded-full"
+                style={{ width: `${(savedSession.currentQuestionIndex / chapter.terms.length) * 100}%` }}
+              />
+            </div>
+            <div className="mt-3 text-center">
+              <span className="text-sm text-gray-600">현재 점수: </span>
+              <span className="text-lg font-bold text-purple-700">{savedSession.score}점</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={resumeSavedQuiz}
+              className="w-full btn-primary text-white font-bold py-4 px-6 rounded-2xl text-lg"
+            >
+              이어서 풀기 →
+            </button>
+            <button
+              onClick={startFreshQuiz}
+              className="w-full bg-gray-100 text-gray-700 font-bold py-4 px-6 rounded-2xl text-lg hover:bg-gray-200 transition-all"
+            >
+              처음부터 다시 시작
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (shuffledTerms.length === 0) {
     return (
@@ -237,7 +364,13 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
             )}
             {!passed && (
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  clearQuizSession();
+                  setIsFinished(false);
+                  setScore(0);
+                  setCurrentQuestionIndex(0);
+                  initializeFreshQuiz();
+                }}
                 className="w-full bg-gray-100 text-gray-700 font-bold py-4 px-6 rounded-2xl text-lg hover:bg-gray-200 transition-all"
               >
                 다시 도전하기

@@ -3,7 +3,21 @@ import { Chapter } from '../types';
 import { CHAPTER_DATA } from '../constants';
 
 const STORAGE_KEY = 'moniquest_progress';
+const QUIZ_SESSION_KEY = 'moniquest_quiz_session';
 const STORAGE_VERSION = 1;
+
+interface QuizSession {
+  chapterId: number;
+  currentQuestionIndex: number;
+  score: number;
+  shuffledTermIds: number[]; // Store term IDs in shuffled order
+  answeredQuestions: {
+    termId: number;
+    isCorrect: boolean;
+    selectedAnswer: string;
+  }[];
+  startedAt: string;
+}
 
 interface GameProgress {
   version: number;
@@ -78,6 +92,33 @@ const saveProgress = (progress: GameProgress): void => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
   } catch (error) {
     console.error('Failed to save game progress:', error);
+  }
+};
+
+const loadQuizSession = (): QuizSession | null => {
+  try {
+    const saved = localStorage.getItem(QUIZ_SESSION_KEY);
+    if (!saved) return null;
+    return JSON.parse(saved) as QuizSession;
+  } catch (error) {
+    console.error('Failed to load quiz session:', error);
+    return null;
+  }
+};
+
+const saveQuizSession = (session: QuizSession): void => {
+  try {
+    localStorage.setItem(QUIZ_SESSION_KEY, JSON.stringify(session));
+  } catch (error) {
+    console.error('Failed to save quiz session:', error);
+  }
+};
+
+const clearQuizSession = (): void => {
+  try {
+    localStorage.removeItem(QUIZ_SESSION_KEY);
+  } catch (error) {
+    console.error('Failed to clear quiz session:', error);
   }
 };
 
@@ -223,6 +264,18 @@ export const useGameProgress = () => {
     };
   }, [progress]);
 
+  const saveQuizSessionState = useCallback((session: QuizSession) => {
+    saveQuizSession(session);
+  }, []);
+
+  const loadQuizSessionState = useCallback((): QuizSession | null => {
+    return loadQuizSession();
+  }, []);
+
+  const clearQuizSessionState = useCallback(() => {
+    clearQuizSession();
+  }, []);
+
   return {
     progress,
     isLoaded,
@@ -235,6 +288,9 @@ export const useGameProgress = () => {
     resetProgress,
     getChaptersWithData,
     calculateLevel,
+    saveQuizSessionState,
+    loadQuizSessionState,
+    clearQuizSessionState,
   };
 };
 

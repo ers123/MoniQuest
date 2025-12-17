@@ -27,6 +27,19 @@ interface Stats {
   lastPlayedAt: string | null;
 }
 
+interface QuizSession {
+  chapterId: number;
+  currentQuestionIndex: number;
+  score: number;
+  shuffledTermIds: number[];
+  answeredQuestions: {
+    termId: number;
+    isCorrect: boolean;
+    selectedAnswer: string;
+  }[];
+  startedAt: string;
+}
+
 interface AppContextType {
   userName: string;
   chapters: Chapter[];
@@ -36,6 +49,9 @@ interface AppContextType {
   startQuiz: () => void;
   levelInfo: LevelInfo;
   stats: Stats;
+  saveQuizSession: (session: QuizSession) => void;
+  loadQuizSession: () => QuizSession | null;
+  clearQuizSession: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -60,6 +76,9 @@ const App: React.FC = () => {
     updateChapterProgress,
     getChaptersWithData,
     calculateLevel,
+    saveQuizSessionState,
+    loadQuizSessionState,
+    clearQuizSessionState,
   } = useGameProgress();
 
   const [userName, setUserName] = useState<string>('');
@@ -192,6 +211,9 @@ const App: React.FC = () => {
     startQuiz,
     levelInfo,
     stats,
+    saveQuizSession: saveQuizSessionState,
+    loadQuizSession: loadQuizSessionState,
+    clearQuizSession: clearQuizSessionState,
   };
 
   return (
