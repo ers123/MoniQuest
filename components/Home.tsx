@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../App';
 import { StarIcon } from './icons';
 import LiraMascot from './LiraMascot';
+import Achievements from './Achievements';
+import StatsBoard from './StatsBoard';
+
+type Tab = 'chapters' | 'stats' | 'achievements';
 
 const Home: React.FC = () => {
   const { userName, chapters, goToChapter, levelInfo, stats } = useApp();
+  const [activeTab, setActiveTab] = useState<Tab>('chapters');
 
   // Calculate completion percentage
   const completedChapters = chapters.filter(c => c.status === 'completed').length;
@@ -67,22 +72,70 @@ const Home: React.FC = () => {
         </div>
       </header>
 
-      {/* Progress Overview */}
+      {/* Tab Navigation */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-gamja text-purple-700">탐험 진행률</h2>
-          <span className="text-sm text-gray-500">{completionPercentage}%</span>
-        </div>
-        <div className="h-3 bg-purple-100 rounded-full overflow-hidden">
-          <div
-            className="h-full progress-bar rounded-full transition-all duration-1000"
-            style={{ width: `${completionPercentage}%` }}
-          />
+        <div className="glass rounded-2xl p-2 flex gap-2">
+          <button
+            onClick={() => setActiveTab('chapters')}
+            className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
+              activeTab === 'chapters'
+                ? 'btn-primary text-white shadow-lg'
+                : 'text-gray-600 hover:bg-purple-50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span>📚</span>
+              <span>챕터</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
+              activeTab === 'stats'
+                ? 'btn-primary text-white shadow-lg'
+                : 'text-gray-600 hover:bg-purple-50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span>📊</span>
+              <span>통계</span>
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('achievements')}
+            className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
+              activeTab === 'achievements'
+                ? 'btn-primary text-white shadow-lg'
+                : 'text-gray-600 hover:bg-purple-50'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span>🏆</span>
+              <span>업적</span>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* Chapter Selection - Adventure Map Style */}
-      <section>
+      {/* Tab Content */}
+      {activeTab === 'chapters' && (
+        <>
+          {/* Progress Overview */}
+          <div className="mb-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-gamja text-purple-700">탐험 진행률</h2>
+              <span className="text-sm text-gray-500">{completionPercentage}%</span>
+            </div>
+            <div className="h-3 bg-purple-100 rounded-full overflow-hidden">
+              <div
+                className="h-full progress-bar rounded-full transition-all duration-1000"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Chapter Selection - Adventure Map Style */}
+          <section className="animate-fade-in">
         <h2 className="text-lg font-gamja text-purple-700 mb-4">챕터 선택</h2>
         <div className="space-y-3">
           {chapters.map((chapter, index) => {
@@ -209,16 +262,24 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Encouragement message */}
-      <div className="mt-8 text-center">
-        <p className="text-gray-400 text-sm">
-          {completionPercentage === 100
-            ? '🎉 축하해! 모든 챕터를 완료했어!'
-            : completionPercentage >= 50
-              ? '💪 절반 이상 완료! 조금만 더 힘내자!'
-              : '🚀 멋진 시작이야! 계속 도전해봐!'}
-        </p>
-      </div>
+          {/* Encouragement message */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              {completionPercentage === 100
+                ? '🎉 축하해! 모든 챕터를 완료했어!'
+                : completionPercentage >= 50
+                  ? '💪 절반 이상 완료! 조금만 더 힘내자!'
+                  : '🚀 멋진 시작이야! 계속 도전해봐!'}
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* Stats Tab */}
+      {activeTab === 'stats' && <StatsBoard />}
+
+      {/* Achievements Tab */}
+      {activeTab === 'achievements' && <Achievements />}
     </div>
   );
 };

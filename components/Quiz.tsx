@@ -76,6 +76,8 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
   const [showLiraHint, setShowLiraHint] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
   const [savedSession, setSavedSession] = useState<any>(null);
+  const [hintRevealed, setHintRevealed] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
 
   // Check for saved session on mount
   useEffect(() => {
@@ -199,6 +201,7 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
     setFeedbackMessage(null);
     setFeedbackTone(null);
     setShowLiraHint(false);
+    setHintRevealed(false);
     if (currentQuestionIndex < shuffledTerms.length - 1) {
       const newIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(newIndex);
@@ -217,6 +220,12 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
       // Clear session when quiz is finished
       clearQuizSession();
     }
+  };
+
+  const revealHint = () => {
+    setHintRevealed(true);
+    setHintsUsed(prev => prev + 1);
+    vibrate(30);
   };
 
   // Show resume dialog if there's a saved session
@@ -319,6 +328,11 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
             <div className="text-lg text-gray-600">
               {score} / {shuffledTerms.length} 정답
             </div>
+            {hintsUsed > 0 && (
+              <div className="text-sm text-purple-600 mt-2">
+                💡 힌트 {hintsUsed}개 사용
+              </div>
+            )}
           </div>
 
           {/* Stars display */}
@@ -419,11 +433,42 @@ const Quiz: React.FC<QuizProps> = ({ chapter }) => {
       </div>
 
       {/* Question card */}
-      <div className="glass rounded-2xl p-6 mb-6 animate-scale-in">
+      <div className="glass rounded-2xl p-6 mb-4 animate-scale-in">
         <p className="text-xl text-gray-800 font-semibold text-center leading-relaxed">
           {currentTerm.quiz_question}
         </p>
       </div>
+
+      {/* Hint Button */}
+      {!selectedAnswer && (
+        <div className="mb-4 animate-fade-in-up">
+          {!hintRevealed ? (
+            <button
+              onClick={revealHint}
+              className="w-full glass-purple rounded-xl p-4 flex items-center justify-center gap-3 touch-feedback hover:scale-105 transition-all"
+            >
+              <span className="text-2xl">💡</span>
+              <span className="font-bold text-purple-700">힌트 보기</span>
+            </button>
+          ) : (
+            <div className="glass-purple rounded-xl p-4 animate-scale-in">
+              <div className="flex items-start gap-3">
+                <LiraMascot size="sm" mood="thinking" className="flex-shrink-0 mt-1" />
+                <div>
+                  <div className="font-bold text-purple-700 mb-2 flex items-center gap-2">
+                    <span>💡</span>
+                    <span>리라의 힌트</span>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    <strong className="text-purple-600">{currentTerm.name}</strong>은/는{' '}
+                    {currentTerm.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Answer options */}
       <div className="space-y-3 mb-6">
